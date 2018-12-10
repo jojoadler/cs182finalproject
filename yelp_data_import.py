@@ -7,6 +7,7 @@ import random
 
 # Track filepath - note that this will need to be changed
 filepath = '/Users/jojoadler/Desktop/yelp_academic_dataset_business.json'
+#filepath = '/Users/amydanoff/Desktop/yelp_dataset/yelp_dataset/yelp_academic_dataset_business.json'
 
 # Function that returns formatted data
 def open_data(filepath):
