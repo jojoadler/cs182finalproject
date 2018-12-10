@@ -1,5 +1,4 @@
 # Note - this is written in python 3
-
 import json
 import operator
 import random
@@ -17,7 +16,6 @@ def open_data(filepath):
 
 # List of all businesses in dataset
 data = open_data(filepath)
-#print(data[0])
 
 """
 # get a list of all the different cities
@@ -108,7 +106,7 @@ def unique_categories(categories):
 	# Takes in a dictionary of categories and returns True if unique, else False
 	# This is low-key hard. maybe constraint should be more than twice
 	#return all(value == 1 for value in list(categories.values()))
-	return all(value == 1 for value in list(categories.values()))
+	return all(value < 3 for value in list(categories.values()))
 
 def star_average(businesses):
 	# Returns average star rating for all businesses in a list
@@ -198,9 +196,9 @@ def accept_bag(new_bag, old_bag, T):
 			#print ("accept bag - high star avg")
 			return True
 		#else:
-		#	if random.random() < math.exp((new_avg - old_avg) / T):
+			#if random.random() < math.exp((new_avg - old_avg) / T):
 				#print ("accept bag - low star avg")
-		#		return True
+				#return True
 	#print ("not accept bag")
 	return False
 
@@ -210,7 +208,7 @@ def simulated_annealing():
 
 	Return list of itinerary values while annealing and final bag: (vals, bag)
 	"""
-	TRIALS = 100
+	TRIALS = 1000
 	T = 1000.0
 	DECAY = 0.98
 
@@ -221,13 +219,13 @@ def simulated_annealing():
 	for trial in range(TRIALS):
 
 	    # Pick a random neighbor
-	    next_bag = neighbor_bag(sim_bag)
+	    next_bag = neighbor_bag(sim_bag).copy()
 	    next_val = star_average(next_bag)
 
 	    # Accept with some probability
 	    if accept_bag(next_bag, sim_bag, T):
 	        sim_val = next_val
-	        sim_bag = next_bag
+	        sim_bag = next_bag.copy()
 
 	    # Update temperature
 	    T *= DECAY
@@ -238,6 +236,7 @@ def simulated_annealing():
 	return vals, sim_bag
 
 vals, sim_bag = simulated_annealing()
-print("vals", vals)
+print("FINAL vals", vals)
 print("sim_bag", sim_bag)
+print("length sim bag", str(len(sim_bag)))
 print("DONE")
