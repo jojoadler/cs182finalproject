@@ -1,9 +1,9 @@
 # Note - this is written in python 3
-
 import json
 import operator
 import random
 import math
+import time
 
 filepath = '/Users/amydanoff/Desktop/yelp_dataset/yelp_dataset/yelp_academic_dataset_business.json'
 
@@ -17,7 +17,6 @@ def open_data(filepath):
 
 # List of all businesses in dataset
 data = open_data(filepath)
-#print(data[0])
 
 """
 # get a list of all the different cities
@@ -36,7 +35,7 @@ sorted_cities = sorted(cities.items(), key=lambda kv: kv[1])
 # A city with ~200 entries is  'Belmont' (158 entries)
 """
 
-belmont_businesses = [business for business in data if business['city'] == 'Belmont']
+belmont_businesses = [business for business in data if business['city'] == 'Phoenix']
 #print(len(belmont_rests))
 #print(belmont_rests)
 #for rest in belmont_rests:
@@ -72,7 +71,7 @@ cats_split = [x.strip() for x in belmont_rests[0]['categories'].split(',')]
 # SIMULATED ANNEALING PROBLEM IS HERE VVV
 
 # number of items
-N = 51
+N = len(belmont_rests)
 
 # Itinerary (number of meals) limit
 M = 7
@@ -82,12 +81,22 @@ items = belmont_rests
 #print(len(items))
 
 # Values for restaurants - in terms of star rating
-stars = [x['stars'] for x in items]
+#stars = [x['stars'] for x in items]
 #print(len(stars))
 
 def strip_categories(categories):
 	# Converts a 'Categories' string into a list of categories
 	return [x.strip() for x in categories.split(',')]
+
+def has_category(business, category):
+	# Takes in a business object and a category, returns True if the business has that category
+	# and False otherwise
+	categories = set()
+	if business['categories']:
+		categories = set(strip_categories(business['categories']))
+	if category in categories:
+		return True 
+	return False
 
 def count_categories(businesses):
 	# Converts a list of business items into a dictionary of categories
@@ -95,7 +104,9 @@ def count_categories(businesses):
 	categories = {}
 	for business in businesses:
 		cats_string = business['categories']
-		cats_list = strip_categories(cats_string)
+		cats_list = []
+		if cats_string:
+			cats_list = strip_categories(cats_string)
 		for cat in cats_list:
 			if cat != 'Restaurants':
 				if cat in categories:
@@ -108,7 +119,32 @@ def unique_categories(categories):
 	# Takes in a dictionary of categories and returns True if unique, else False
 	# This is low-key hard. maybe constraint should be more than twice
 	#return all(value == 1 for value in list(categories.values()))
-	return all(value == 1 for value in list(categories.values()))
+	return all(value < 3 for value in list(categories.values()))
+
+def constraints_match(categories, constraints):
+	"""
+	Takes in a dictionary of category counts and a dictionary specifying the constraints, which are given as MAXIMUMS
+	and returns True if the constraints are satisfied, and False otherwise.
+	Any category that is not specified in the constraints dictionary can have any value.
+	Additionally, there is a category called 'Unique', whereby the user can specify that they want all unique categories.
+	"""
+
+	# Else, iterate through categories and ensure maximums are satisfied
+	for category, val in constraints.items():
+		if category != 'Unique':
+			# If category maximum is exceeded, return False
+			if val != 0:
+				if category in categories:
+					if categories[category] > val:
+						return False
+			else:
+				if category in categories:
+					return False
+
+	# If 'Unique' is specified, ensure categories are unique
+	if constraints['Unique']:
+		return unique_categories(categories)
+	return True
 
 def star_average(businesses):
 	# Returns average star rating for all businesses in a list
@@ -124,7 +160,7 @@ def star_average(businesses):
 	#print ("star_avg", star_avg)
 	return star_avg
 
-def neighbor_bag(bag):
+def neighbor_bag(bag, constraints):
 	curr_bag = bag.copy()
 	#curr_len = len(bag) # never exceed M items
 	curr_cats = count_categories(bag) #count_categories(list(bag.values()))
@@ -148,19 +184,30 @@ def neighbor_bag(bag):
 	-Select an item from the unchosen items at random (check against business ID)
 	-If it violates any constaints, delete from the bag at random amongst violated items until constraints are satisfied
 	"""
-	# try to pick an index at random and add to bag
-	rand_index = random.randint(0, N - 1)
-	rand_biz_ID = items[rand_index]['business_id']
+	# Filter items if any constraints are set to 0
+	start = time.time()
+	blocked_cats = [category for (category, val) in constraints.items() if val == 0]
+	filtered_items = items
+	for category in blocked_cats:
+		for item in filtered_items:
+			if has_category(item, category):
+				filtered_items.remove(item)
+	end = time.time()
+	print("filter time:",(end - start))
+
+	# try to pick an index at random from remaining items and add to bag
+	rand_index = random.randint(0, len(filtered_items) - 1)
+	rand_biz_ID = filtered_items[rand_index]['business_id']
 	# Ensure the same business is not picked twice
 	while rand_biz_ID in curr_biz_IDs:
-	    rand_index = random.randint(0, N - 1)
-	    rand_biz_ID = items[rand_index]['business_id']
+	    rand_index = random.randint(0, len(filtered_items) - 1)
+	    rand_biz_ID = filtered_items[rand_index]['business_id']
 
-	curr_bag.append(items[rand_index])
+	curr_bag.append(filtered_items[rand_index])
 	curr_cats = count_categories(curr_bag)
 
 	# Ensure that we have under M items and that genres are satisfied
-	while len(curr_bag) > M or not unique_categories(curr_cats):
+	while len(curr_bag) > M or not constraints_match(curr_cats, constraints):
 		#print("pick again")
 		# pick a business at random from bag
 		rand_new_index = random.randint(0, len(curr_bag) - 1)
@@ -198,19 +245,22 @@ def accept_bag(new_bag, old_bag, T):
 			#print ("accept bag - high star avg")
 			return True
 		#else:
-		#	if random.random() < math.exp((new_avg - old_avg) / T):
+			#if random.random() < math.exp((new_avg - old_avg) / T):
 				#print ("accept bag - low star avg")
-		#		return True
+				#return True
 	#print ("not accept bag")
 	return False
 
-def simulated_annealing():
+def simulated_annealing(constraints):
 	"""
 	Simulated Annealing Algorithm
 
 	Return list of itinerary values while annealing and final bag: (vals, bag)
 	"""
-	TRIALS = 100
+	# Record start time
+	start_time = time.time()
+
+	TRIALS = 1000
 	T = 1000.0
 	DECAY = 0.98
 
@@ -221,13 +271,13 @@ def simulated_annealing():
 	for trial in range(TRIALS):
 
 	    # Pick a random neighbor
-	    next_bag = neighbor_bag(sim_bag)
+	    next_bag = neighbor_bag(sim_bag, constraints).copy()
 	    next_val = star_average(next_bag)
 
 	    # Accept with some probability
 	    if accept_bag(next_bag, sim_bag, T):
 	        sim_val = next_val
-	        sim_bag = next_bag
+	        sim_bag = next_bag.copy()
 
 	    # Update temperature
 	    T *= DECAY
@@ -235,9 +285,19 @@ def simulated_annealing():
 	    # Update vals
 	    vals.append(sim_val)
 
-	return vals, sim_bag
+	# Record end time
+	end_time = time.time()
+	run_time = (end_time - start_time)
+	print("run_time", str(run_time))
+	return vals, sim_bag, run_time
 
-vals, sim_bag = simulated_annealing()
-print("vals", vals)
+
+unique_constraints = {'Unique': True}
+mexican_constraints = {'Unique': False, 'Mexican': 3}
+no_mexican_constraints = {'Unique': True, 'Mexican': 0, 'Pizza': 0}
+vals, sim_bag, run_time = simulated_annealing(no_mexican_constraints)
+print("FINAL vals", vals)
 print("sim_bag", sim_bag)
+print("length sim bag", str(len(sim_bag)))
+print("run_time", str(run_time))
 print("DONE")
