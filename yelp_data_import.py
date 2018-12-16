@@ -150,9 +150,8 @@ unassigned = copy.deepcopy(states.keys())
 curr_domains = {}
 curr_deleted = {}
 
-stardomains = {}
-for state in state_domaines
-	stardomains[state] = sorted(state_domains[state], key = lambda restaurant: restaurant['stars']).reverse()
+stardomains = {sorted(state_domains[state], key = lambda restaurant: restaurant['stars']).reverse() for state in state_domains}
+statedomain = (sorted(state_domains[(0,1)], key = lambda restaurant: restaurant['stars'])).reverse()
 
 for state in state_domains:
 	for restaurant in state_domains[state]:
