@@ -18,28 +18,7 @@ def open_data(filepath):
 # List of all businesses in dataset
 data = open_data(filepath)
 
-"""
-# get a list of all the different cities
-cities = {}
-for business in data:
-	city = business['city']
-	if city in cities:
-		cities[city] += 1
-	else:
-		cities[city] = 1
-sorted_cities = sorted(cities.items(), key=lambda kv: kv[1])
-#print(len(cities))
-#print(cities)
-#print(len(sorted_cities)) # 1111
-#print("sorted_cities", sorted_cities) # Cities w/ the most are: Las Vegas, Phoenix, Toronto, Charlotte
-# A city with ~200 entries is  'Belmont' (158 entries)
-"""
-
 belmont_businesses = [business for business in data if business['city'] == 'Phoenix']
-#print(len(belmont_rests))
-#print(belmont_rests)
-#for rest in belmont_rests:
-	#print(rest['categories'])
 
 # Find all categories in belmont restaurants
 	# we are ONLY interested in businesses that have the "restaurant" tag. 
@@ -160,6 +139,19 @@ def star_average(businesses):
 	#print ("star_avg", star_avg)
 	return star_avg
 
+def rating_average(businesses, weights):
+	"""
+	Given a list of businesses, returns their average 'rating' as defined by
+	the evaluation function:
+	rating = log(# of reviews) * star rating
+	"""
+	rev_weight, star_weight = weights['reviews'], weights['stars']
+	rating_sum = sum([(rev_weight * math.log(float(business['review_count'])) + star_weight * float(business['stars'])) for business in businesses])
+	rating_avg = 0
+	if len(businesses) > 0:
+		rating_avg = rating_sum / float(len(businesses))
+	return rating_avg
+
 def neighbor_bag(bag, constraints):
 	curr_bag = bag.copy()
 	#curr_len = len(bag) # never exceed M items
@@ -223,35 +215,33 @@ def neighbor_bag(bag, constraints):
 
 #neighbor_bag(belmont_rests)
 
-def accept_bag(new_bag, old_bag, T):
+def accept_bag(new_bag, old_bag, T, weights):
 	# Always accept the bag if the length is longer (probability = 1)
 	# accept with some probability if the length is the same, but the avg star rating is lower
-	#print("IN ACCEPT BAG")
-	#print("new bag", new_bag)
-	#print("bags are same", new_bag == old_bag)
-	#print("new bag length", len(new_bag))
-	#print("new bag star avg", star_average(new_bag))
-	#print("old bag", old_bag)
-	#print("old bag length", len(old_bag))
-	#print("old bag star avg", star_average(old_bag))
+	# weights is a dict {stars: weight, reviews: weight}, where weight is an int between 0-5
 
 	if len(new_bag) > len(old_bag):
-		#print ("Accept long bag")
+		print ("Accept long bag")
 		return True
 	else:
 		old_avg = star_average(old_bag)
 		new_avg = star_average(new_bag)
-		if new_avg > old_avg:
-			#print ("accept bag - high star avg")
+		old = rating_average(old_bag, weights)
+		new = rating_average(new_bag, weights)
+		print("old", old)
+		print("new", new)
+		#if new_avg > old_avg:
+		if new > old:
+			print ("accept bag - high star avg")
 			return True
-		#else:
-			#if random.random() < math.exp((new_avg - old_avg) / T):
-				#print ("accept bag - low star avg")
-				#return True
-	#print ("not accept bag")
+		else:
+			if random.random() < math.exp((new - old) / T):
+				print ("accept bag - low star avg")
+				return True
+	print ("not accept bag")
 	return False
 
-def simulated_annealing(constraints):
+def simulated_annealing(constraints, weights):
 	"""
 	Simulated Annealing Algorithm
 
@@ -272,10 +262,11 @@ def simulated_annealing(constraints):
 
 	    # Pick a random neighbor
 	    next_bag = neighbor_bag(sim_bag, constraints).copy()
-	    next_val = star_average(next_bag)
+	    #next_val = star_average(next_bag)
+	    next_val = rating_average(next_bag, weights)
 
 	    # Accept with some probability
-	    if accept_bag(next_bag, sim_bag, T):
+	    if accept_bag(next_bag, sim_bag, T, weights):
 	        sim_val = next_val
 	        sim_bag = next_bag.copy()
 
@@ -295,7 +286,8 @@ def simulated_annealing(constraints):
 unique_constraints = {'Unique': True}
 mexican_constraints = {'Unique': False, 'Mexican': 3}
 no_mexican_constraints = {'Unique': True, 'Mexican': 0, 'Pizza': 0}
-vals, sim_bag, run_time = simulated_annealing(no_mexican_constraints)
+weights = {'reviews': 4, 'stars': 2}
+vals, sim_bag, run_time = simulated_annealing(no_mexican_constraints, weights)
 print("FINAL vals", vals)
 print("sim_bag", sim_bag)
 print("length sim bag", str(len(sim_bag)))
