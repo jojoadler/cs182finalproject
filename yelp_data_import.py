@@ -131,68 +131,67 @@ def runAC3 (stts, domain, neighbs, queue = None):
 				gone = True
 		return gone
 
-	"""def state_setter (state):
-		highest_star = -float('inf')
-		best_rest = None
-		for restaurant in state_domains[state]:
-			if restaurant['stars'] > highest_star:
-				best_rest = restaurant
-		return best_rest
-
-	for state in states:
-		states[state] = state_setter(state)
-
-	return states"""
-
-assigned = []
 unassigned = copy.deepcopy(states.keys())
-
-curr_domains = {}
+curr_domains = copy.deepcopy(state_domains)
 curr_deleted = {}
+for state in states:
+	curr_deleted[state] = []
 
-stardomains = {sorted(state_domains[state], key = lambda restaurant: restaurant['stars']).reverse() for state in state_domains}
-statedomain = (sorted(state_domains[(0,1)], key = lambda restaurant: restaurant['stars'])).reverse()
 
-for state in state_domains:
-	for restaurant in state_domains[state]:
-
+def stardomain(var, curr_domains):
+	if curr_domains:
+		stardomain = sorted(curr_domains[state], key = lambda restaurant: restaurant['stars'])
+		stardomain.reverse()
+	else:
+		stardomain = sorted(state_domains[state], key = lambda restaurant: restaurant['stars'])
+		stardomain.reverse()
+	return stardomain
 
 def backtrack(states, domains, neighbors):
+	counter = 0
 	curr_domains = copy.deepcopy(domains)
 	for meal in states:
 		curr_deleted[meal] = []
 	return recurse({}, states, domains, neighbors)
 
-
+varr = [None]
 def recurse(assignment, states, domains, neighbors):
+	print 5
 	if len(unassigned) == 0:
-		return states
+		print 'DONEZO'
+		return assignment
 
-	var = random.choice(unassigned)
+	varr[0] = literallyjustchoosearandomvariablebecauseforsomereasonwhatimdoingisntworking()
+	print varr
+	print unassigned
+	print assignment.keys()
 
-	for val in stardomains[var]:
-		assignment[var] = val
-		unassigned.remove(var)
-		if curr_domains:
-			forwardcheck(var, val, assignment)
+	for val in stardomain(varr[0], curr_domains):
+		print varr[0]
+		assignment[varr[0]] = val
+		forwardcheck(varr[0], val, assignment)
 		nextstep = recurse(assignment, states, domains, neighbors)
 		if nextstep != None:
 			return nextstep
 	return None
 
-#do the variable ordering and order th
-	def forwardcheck(var, val, assignment):
-		if curr_domains:
-			for (meal, restaurant) in curr_deleted[var]:
-				curr_domains[meal].append(restaurant)
-			pruned[var] = []
+def forwardcheck(var, val, assignment):
+	if curr_domains:
+		for (meal, restaurant) in curr_deleted[var]:
+			curr_domains[meal].append(restaurant)
+		curr_deleted[var] = []
 
-			for meal in neaighbors[var]:
-				if meal not in assignment:
-					for restaurant in curr_domains[meal][:]:
-						if not check_sol(var, val, meal, restaurant):
-							curr_domains[meal].remove(restaurant)
-							curr_deleted[var].append((meal, restaurant))
+		for meal in neighbors[var]:
+			if meal not in assignment:
+				for restaurant in curr_domains[meal][:]:
+					if not check_sol(states, var, val, meal, restaurant):
+						curr_domains[meal].remove(restaurant)
+						curr_deleted[var].append((meal, restaurant))
+
+def literallyjustchoosearandomvariablebecauseforsomereasonwhatimdoingisntworking():
+	var = random.choice(unassigned)
+	unassigned.remove(var)
+	return var
 
 practice_domains = {'a':[1,2,3,4],'b':[1,2,3,4],'c':[1,2,3,4],'d':[1,2,3,4]} 
 practice_states = {'a':None,'b':None,'c':None,'d':None} 
