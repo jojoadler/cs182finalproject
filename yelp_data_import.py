@@ -101,101 +101,100 @@ def check_sol (statess, bigX, littleX, bigY, littleY):
 	returnval = constraint_generator(checkstates).get((bigX,bigY), False)
 	return returnval
 
-def weirdlist (stts, neighbors): return [(statei, statek) for statei in stts for statek in neighbors[statei]]
-def AC3 (stts, domain, neighbs, queue = None):
-	if queue == None:
-		queue = weirdlist(stts, neighbs)
-	while queue:
-		(statei, statej) = queue.pop()
-		if remove_arcs(stts, domain, neighbs, statei, statej):
-			"""if len(domain[statei]) == 0:
-				return False"""
-			for statek in neighbs[statei]:
-				queue.append((statek, statei))
-	#return queue
+def runAC3 (stts, domain, neighbs, queue = None):
+	def constraint (x, y): return (x != y)
+	def weirdlist (stts, neighbors): return [(statei, statek) for statei in stts for statek in neighbors[statei]]
+	def AC3 (stts, domain, neighbs, queue = None):
+		if queue == None:
+			queue = weirdlist(stts, neighbs)
+		while queue:
+			(statei, statej) = queue.pop()
+			if remove_arcs(stts, domain, neighbs, statei, statej):
+				"""if len(domain[statei]) == 0:
+					return False"""
+				for statek in neighbs[statei]:
+					queue.append((statek, statei))
 
-def remove_arcs(stts, domain, neighbs, statei, statej):
-	#figure out what the fuck [:] means and change it to your own syntax 
-	"""def consistent(state1, state2):
-		for poss_value in domain[state2]:
-			if state2 in neighbors[state1]: #& poss_val !=x:
-				return True
-		return False"""
+	def remove_arcs(stts, domain, neighbs, statei, statej):
+		"""def consistent(state1, state2):
+			for poss_value in domain[state2]:
+				if state2 in neighbors[state1]: #& poss_val !=x:
+					return True
+			return False"""
+		gone = False
+		for restaurantx in domain[statei]:
+			arc_checker = (map(lambda restauranty: not (restaurantx != restauranty), domain[statej]))
+			if arc_checker == [False for x in range(len(arc_checker))]:
+				#print not map(lambda restauranty: check_sol(stts, statei, restaurantx, statej, restauranty), domain[statej])
+				#print domain
+				domain[statei].remove(restaurantx)
+				gone = True
+		return gone
 
-	gone = False
+	"""def state_setter (state):
+		highest_star = -float('inf')
+		best_rest = None
+		for restaurant in state_domains[state]:
+			if restaurant['stars'] > highest_star:
+				best_rest = restaurant
+		return best_rest
 
-	for restaurantx in domain[statei]:
-		arc_checker = (map(lambda restauranty: not (restaurantx != restauranty), domain[statej]))
-		if arc_checker == [False for x in range(len(arc_checker))]:
-			#print not map(lambda restauranty: check_sol(stts, statei, restaurantx, statej, restauranty), domain[statej])
-			#print domain
-			domain[statei].remove(restaurantx)
-			gone = True
-	print gone
+	for state in states:
+		states[state] = state_setter(state)
 
-	return gone
+	return states"""
+
+assigned = []
+unassigned = copy.deepcopy(states.keys())
+
+curr_domains = {}
+curr_deleted = {}
+
+stardomains = {}
+for state in state_domaines
+	stardomains[state] = sorted(state_domains[state], key = lambda restaurant: restaurant['stars']).reverse()
+
+for state in state_domains:
+	for restaurant in state_domains[state]:
+
+
+def backtrack(states, domains, neighbors):
+	curr_domains = copy.deepcopy(domains)
+	for meal in states:
+		curr_deleted[meal] = []
+	return recurse({}, states, domains, neighbors)
+
+
+def recurse(assignment, states, domains, neighbors):
+	if len(unassigned) == 0:
+		return states
+
+	var = random.choice(unassigned)
+
+	for val in stardomains[var]:
+		assignment[var] = val
+		unassigned.remove(var)
+		if curr_domains:
+			forwardcheck(var, val, assignment)
+		nextstep = recurse(assignment, states, domains, neighbors)
+		if nextstep != None:
+			return nextstep
+	return None
+
+#do the variable ordering and order th
+	def forwardcheck(var, val, assignment):
+		if curr_domains:
+			for (meal, restaurant) in curr_deleted[var]:
+				curr_domains[meal].append(restaurant)
+			pruned[var] = []
+
+			for meal in neaighbors[var]:
+				if meal not in assignment:
+					for restaurant in curr_domains[meal][:]:
+						if not check_sol(var, val, meal, restaurant):
+							curr_domains[meal].remove(restaurant)
+							curr_deleted[var].append((meal, restaurant))
 
 practice_domains = {'a':[1,2,3,4],'b':[1,2,3,4],'c':[1,2,3,4],'d':[1,2,3,4]} 
 practice_states = {'a':None,'b':None,'c':None,'d':None} 
 practice_neighbors = {'a':['b','d'],'b':['a','c'],'c':['b','d',],'d':['a','c']}
-
-"""for state in domain[state1][:]:
-	if every(lambda y: not constraint_generator(states)[(state1,state2)], state_domains[state2]):
-		domain[state1].remove(state)
-		gone = True
-return gone"""
-
-"""def num_conflicts(states, domain, state):
-	counter = 0
-	relevant_constraints = {}
-	for key in states.keys():
-		s1, s2 = key
-		if s1 == state:
-			relevant_constraints[(s1,s2)] = copy.deepcopy(constraints[(s1,s2)])
-		if s2 == state:
-			relevant_constraints[(s1,s2)] = copy.deepcopy(constraints[(s1,s2)])
-
-	for constraint in relevant_constraints:
-		if constraint == False
-			counter += 1
-	return counter"""
-
-"""def min_conflicts(stts, domain, neighbs, maxx):
-	current = {} 
-	for state in states:
-		#should be least conflicts assignment but get to that later
-		current[state] = random.choice(domain[state])
-	for step in range(maxx):
-		for state in states:
-			conflicted = None
-			if not conflicted:
-				return current
-			newState = random.choice(conflicted)
-			newRest = random.choice()"""
-
-"""def is_solution (states):
-	val = 0
-	for constraint in constraint_generator(states):
-		if constraint_generator(states) == False:
-			val += 1
-	if val == 0:
-		return True
-	else:
-		return False
-
-def backtracking (states, domains, forwardcheck = True):
-	if is_solution(states):
-		return states
-	else: """
-
-
-
-
-
-
-# should the constraints be the actual restaurants or the exact user input?
-# if it were exact restaurants, all mexican and italian restaurants would have 
-# to be included
-
-
-
