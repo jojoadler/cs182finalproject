@@ -1,6 +1,7 @@
 # Written in python 3
 import json
 import random
+import time
 
 """
 Constraints:
@@ -88,13 +89,45 @@ def check_csp(businesses, num_meals):
 		return True
 	return False
 
-def min_conflicts(max_steps, curr_state, num_meals):
+def constraints_match(categories, constraints):
+	"""
+	Takes in a dictionary of category counts and a dictionary specifying the constraints, which are given as MAXIMUMS
+	and returns True if the constraints are satisfied, and False otherwise.
+	Any category that is not specified in the constraints dictionary can have any value.
+	Additionally, there is a category called 'Unique', whereby the user can specify that they want all unique categories.
+	"""
+
+	# Else, iterate through categories and ensure maximums are satisfied
+	for category, val in constraints.items():
+		if category != 'Unique':
+			# If category maximum is exceeded, return False
+			if val != 0:
+				if category in categories:
+					if categories[category] > val:
+						return False
+			else:
+				if category in categories:
+					return False
+
+	# If 'Unique' is specified, ensure categories are unique
+	if constraints['Unique']:
+		return unique_categories(categories)
+	return True
+
+
+def min_conflicts(max_steps, curr_state, num_meals, constraints):
+	start = time.time()
 	for trial in range(max_steps):
 		# If current assignment satisfies the CSP, then return assignment
-		if check_csp(curr_state, num_meals):
+		#if check_csp(curr_state, num_meals):
+		curr_counts = count_categories(curr_state)
+		if constraints_match(curr_counts, constraints):
 			print("true")
-			return curr_state
+			end = time.time()
+			run_time = end - start
+			return curr_state, run_time
 		else:
+			print("blerrghhhhhh")
 			# Find which vars have conflicts
 			conflict_vars = []
 			cat_counts = count_categories(curr_state)
@@ -102,8 +135,12 @@ def min_conflicts(max_steps, curr_state, num_meals):
 			for business in curr_state:
 				cats = strip_categories(business['categories'])
 				for cat in cats:
-					if cat_counts[cat] > 1 and business not in conflict_vars:
-						conflict_vars.append(business)
+					if constraints['Unique']:
+						if cat_counts[cat] > 1 and business not in conflict_vars:
+							conflict_vars.append(business)
+					if cat in constraints:
+						if cat_counts[cat] > constraints[cat] and business not in conflict_vars:
+							conflict_vars.append(business)
 			print("conflict_vars", conflict_vars)
 			# Pick value at random from conflicted variables
 			rand_index = 0
@@ -115,15 +152,45 @@ def min_conflicts(max_steps, curr_state, num_meals):
 			# update category count
 			cat_counts = count_categories(curr_state)
 			# Pick replacement with fewest conflicts w remaining vars
-			# specifically, pick a replacement whose categories do not already exist in categories
+			# specifically, pick a replacement whose categories do not already exist in categories if unique
+			# OR whose categories are not in constraints
+			# OR whose categories have highest count in constraints
 			# Create list of all vars w min conflicts and pick one w highest rating greedily
 			min_conflict_vars = []
 			for item in belmont_rests:
 				if item not in curr_state and item != rand_var:
 					cats = strip_categories(item['categories'])
-					not_unique = any([cat in cat_counts for cat in cats])
-					if not not_unique:
-						min_conflict_vars.append(item)
+					if constraints['Unique']:
+						not_unique = any([cat in cat_counts for cat in cats])
+						#limited = any([cat in constraints and constraints[cat] == 0 for cat in cats])
+						if not not_unique:
+							min_conflict_vars.append(item)
+					# If not constrained by uniqueness, pick vars with highest maximum in constraints
+					# or unconstrained
+					else:
+						constraints_ints = constraints.copy()
+						print("constraints_ints.items()", constraints_ints.items())
+						del constraints_ints['Unique']
+						limited_cats = [cat for (cat, val) in constraints_ints.items() if val == 0]
+						more_lim_cats = [cat for (cat, val) in constraints_ints.items() if cat in cat_counts and cat_counts[cat] + 1 >= val]
+						print("more_lim_cats", more_lim_cats)
+						limited_cats += more_lim_cats
+						print("limited_cats", limited_cats)
+						#print("nonlimited_cats", nonlimited_cats)
+						unconstrained_biz = all([cat not in limited_cats for cat in cats])
+						if unconstrained_biz:
+							min_conflict_vars.append(item)
+						"""
+						while not min_conflict_vars:
+							constraints_ints = constraints.copy()
+							del constraints_ints['Unique']
+							nonlimited_cats = [cat for (cat, val) in constraints_ints.items() if val != 0]
+							constraints_sorted = sorted(nonlimited_cats, key=constraints_ints.get, reverse=True)
+							print("constraints_sorted", constraints_sorted)
+						"""
+
+
+			print("min_conflict_vars", min_conflict_vars)
 			# Greedily pick one with highest rating
 			min_conflict_vars_sorted = sorted(min_conflict_vars, key=lambda d: float(d['stars']), reverse=True)
 			curr_state.append(min_conflict_vars_sorted[0])
@@ -138,8 +205,14 @@ print(len(belmont_rests))
 num_meals = 7
 TRIALS = 1000
 
+unique_constraints = {'Unique': True}
+mexican_constraints = {'Unique': False, 'Mexican': 0, 'Pizza': 0, 'American (New)': 0, 'Japanese':0, 'Chinese': 1}
+no_mexican_constraints = {'Unique': True, 'Mexican': 0, 'Pizza': 0}
+
+
 curr_rests = make_greedy(belmont_rests, num_meals)
-finalstate = min_conflicts(TRIALS, curr_rests, 7)
+finalstate, run_time = min_conflicts(TRIALS, curr_rests, 7, mexican_constraints)
 print("finalstate", finalstate)
 staravg = star_average(finalstate)
 print("star_average", staravg)
+print("run_time", run_time)
