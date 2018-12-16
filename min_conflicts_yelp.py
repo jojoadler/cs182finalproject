@@ -2,15 +2,10 @@
 import json
 import random
 import time
+import math
 
-"""
-Constraints:
-	-7 restaurants overall
-	-cannot eat at the same genre restaurant more than 2 times
-	-must all be in belmont
-	-trying to find max stars
-"""
 
+# Set up data
 filepath = '/Users/amydanoff/Desktop/yelp_dataset/yelp_dataset/yelp_academic_dataset_business.json'
 
 # Function that returns formatted data
@@ -37,8 +32,10 @@ def filter_restaurants(data, city):
 
 def strip_categories(categories):
 	# Converts a 'Categories' string into a list of categories
-	cats = [x.strip() for x in categories.split(',')]
-	cats.remove('Restaurants')
+	cats = []
+	if categories:
+		cats = [x.strip() for x in categories.split(',')]
+		cats.remove('Restaurants')
 	return cats
 
 def count_categories(businesses):
@@ -69,8 +66,15 @@ def make_greedy(num_meals, maxtimes, data):
 	while len(curr_rests) < num_meals:
 		curr_cats = count_categories(curr_rests)
 """
-def make_greedy(data, num_meals):
-	return data[0:num_meals]
+def make_greedy(data, num_meals, weights):
+	"""
+	Makes an initial "greedy" assignment of the data, based on the weights given by the user
+	"""
+	rev_weight, star_weight = weights['reviews'], weights['stars']
+	total_weight = rev_weight + star_weight
+	data_sorted = sorted(data, key=lambda d: (rev_weight * math.log(float(d['review_count'])) + star_weight * math.log(float(d['stars'])))/float(total_weight), reverse=True)
+	#print("Data sorted", data_sorted)
+	return data_sorted[0:num_meals]
 
 def star_average(businesses):
 	# Returns average star rating for all businesses in a list
@@ -82,6 +86,20 @@ def star_average(businesses):
 		star_avg = star_sum / float(len(businesses))
 	length = len(businesses)
 	return star_avg
+
+def rating_average(businesses, weights):
+	"""
+	Given a list of businesses, returns their average 'rating' as defined by
+	the evaluation function:
+	rating = log(# of reviews) * star rating
+	"""
+	rev_weight, star_weight = weights['reviews'], weights['stars']
+	total_weight = rev_weight + star_weight
+	rating_sum = sum([((rev_weight * math.log(float(business['review_count'])) + star_weight * math.log(float(business['stars'])))/float(total_weight)) for business in businesses])
+	rating_avg = 0
+	if len(businesses) > 0:
+		rating_avg = rating_sum / float(len(businesses))
+	return rating_avg
 
 def check_csp(businesses, num_meals):
 	categories = count_categories(businesses)
@@ -99,39 +117,49 @@ def constraints_match(categories, constraints):
 
 	# Else, iterate through categories and ensure maximums are satisfied
 	for category, val in constraints.items():
+		print("category, val", category, val)
 		if category != 'Unique':
 			# If category maximum is exceeded, return False
 			if val != 0:
 				if category in categories:
 					if categories[category] > val:
+						print(categories[category], val)
+						print("exceeded max")
 						return False
 			else:
 				if category in categories:
+					print("one when should be 0", category, categories[category])
 					return False
 
 	# If 'Unique' is specified, ensure categories are unique
 	if constraints['Unique']:
+		print("unique_categories check", unique_categories(categories))
 		return unique_categories(categories)
+	print("constraints match")
 	return True
 
 
-def min_conflicts(max_steps, curr_state, num_meals, constraints):
+def min_conflicts(max_steps, curr_state, num_meals, constraints, weights):
+	star_weight = weights['stars']
+	rev_weight = weights['reviews']
+	total_weight = star_weight + rev_weight
 	start = time.time()
 	for trial in range(max_steps):
 		# If current assignment satisfies the CSP, then return assignment
 		#if check_csp(curr_state, num_meals):
 		curr_counts = count_categories(curr_state)
 		if constraints_match(curr_counts, constraints):
-			print("true")
+			#print("true")
+			print("iteration num", trial)
 			end = time.time()
 			run_time = end - start
 			return curr_state, run_time
 		else:
-			print("blerrghhhhhh")
+			#print("blerrghhhhhh")
 			# Find which vars have conflicts
 			conflict_vars = []
 			cat_counts = count_categories(curr_state)
-			print("cat_counts", cat_counts)
+			#print("cat_counts", cat_counts)
 			for business in curr_state:
 				cats = strip_categories(business['categories'])
 				for cat in cats:
@@ -141,13 +169,14 @@ def min_conflicts(max_steps, curr_state, num_meals, constraints):
 					if cat in constraints:
 						if cat_counts[cat] > constraints[cat] and business not in conflict_vars:
 							conflict_vars.append(business)
-			print("conflict_vars", conflict_vars)
+			print("conflict_vars", len(conflict_vars))
 			# Pick value at random from conflicted variables
 			rand_index = 0
 			if len(conflict_vars) > 1:
 				rand_index = random.randint(0, len(conflict_vars) - 1)
 			rand_var = conflict_vars[rand_index]
 			# delete this variable from the current state
+			print("randvar", rand_var)
 			curr_state.remove(rand_var)
 			# update category count
 			cat_counts = count_categories(curr_state)
@@ -161,44 +190,50 @@ def min_conflicts(max_steps, curr_state, num_meals, constraints):
 				if item not in curr_state and item != rand_var:
 					cats = strip_categories(item['categories'])
 					if constraints['Unique']:
+						# Check if unique with any category in current counts
 						not_unique = any([cat in cat_counts for cat in cats])
-						#limited = any([cat in constraints and constraints[cat] == 0 for cat in cats])
-						if not not_unique:
+						# check if blocked by any category
+						blocked = False
+						for cat in cats:
+							if cat in constraints:
+								if constraints[cat] == 0:
+									blocked = True
+						if not not_unique and not blocked:
 							min_conflict_vars.append(item)
 					# If not constrained by uniqueness, pick vars with highest maximum in constraints
 					# or unconstrained
 					else:
 						constraints_ints = constraints.copy()
-						print("constraints_ints.items()", constraints_ints.items())
+						#print("constraints_ints.items()", constraints_ints.items())
 						del constraints_ints['Unique']
 						limited_cats = [cat for (cat, val) in constraints_ints.items() if val == 0]
 						more_lim_cats = [cat for (cat, val) in constraints_ints.items() if cat in cat_counts and cat_counts[cat] + 1 >= val]
-						print("more_lim_cats", more_lim_cats)
+						#print("more_lim_cats", more_lim_cats)
 						limited_cats += more_lim_cats
-						print("limited_cats", limited_cats)
+						#print("limited_cats", limited_cats)
 						#print("nonlimited_cats", nonlimited_cats)
 						unconstrained_biz = all([cat not in limited_cats for cat in cats])
+						#print()
 						if unconstrained_biz:
 							min_conflict_vars.append(item)
-						"""
-						while not min_conflict_vars:
-							constraints_ints = constraints.copy()
-							del constraints_ints['Unique']
-							nonlimited_cats = [cat for (cat, val) in constraints_ints.items() if val != 0]
-							constraints_sorted = sorted(nonlimited_cats, key=constraints_ints.get, reverse=True)
-							print("constraints_sorted", constraints_sorted)
-						"""
 
 
-			print("min_conflict_vars", min_conflict_vars)
+			#print("min_conflict_vars", min_conflict_vars)
 			# Greedily pick one with highest rating
-			min_conflict_vars_sorted = sorted(min_conflict_vars, key=lambda d: float(d['stars']), reverse=True)
+			min_conflict_vars_sorted = sorted(min_conflict_vars, key=lambda d: (rev_weight * math.log(float(d['review_count'])) + star_weight * math.log(float(d['stars'])))/float(total_weight), reverse=True)
+			print("min conflict vars", len(min_conflict_vars_sorted))
 			curr_state.append(min_conflict_vars_sorted[0])
+			print("OK?", constraints_match(count_categories(curr_state), constraints))
+		# If we reach the end of our trials and we have not reached an acceptable solution, return current state
+	print("NO CSP SOL FOUND")
+	end = time.time()
+	run_time = end - start
+	return curr_state, run_time
 
 
 # Filter down to restaurants in Belmont
-belmont_rests = filter_restaurants(data, 'Belmont')
-print(len(belmont_rests))
+belmont_rests = filter_restaurants(data, 'Phoenix')
+#print(len(belmont_rests))
 
 # Make initial greedy assignment - first 7 meals
 # M - number of meals in itinerary
@@ -209,10 +244,13 @@ unique_constraints = {'Unique': True}
 mexican_constraints = {'Unique': False, 'Mexican': 0, 'Pizza': 0, 'American (New)': 0, 'Japanese':0, 'Chinese': 1}
 no_mexican_constraints = {'Unique': True, 'Mexican': 0, 'Pizza': 0}
 
+weights = {'reviews': 4, 'stars': 2}
 
-curr_rests = make_greedy(belmont_rests, num_meals)
-finalstate, run_time = min_conflicts(TRIALS, curr_rests, 7, mexican_constraints)
-print("finalstate", finalstate)
+curr_rests = make_greedy(belmont_rests, num_meals, weights)
+finalstate, run_time = min_conflicts(TRIALS, curr_rests, 7, no_mexican_constraints, weights)
+#print("finalstate", finalstate)
 staravg = star_average(finalstate)
+rating_avg = rating_average(finalstate, weights)
 print("star_average", staravg)
+print("rating_average", rating_avg)
 print("run_time", run_time)

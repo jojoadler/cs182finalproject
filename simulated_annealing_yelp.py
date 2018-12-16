@@ -146,7 +146,8 @@ def rating_average(businesses, weights):
 	rating = log(# of reviews) * star rating
 	"""
 	rev_weight, star_weight = weights['reviews'], weights['stars']
-	rating_sum = sum([(rev_weight * math.log(float(business['review_count'])) + star_weight * float(business['stars'])) for business in businesses])
+	total_weight = rev_weight + star_weight
+	rating_sum = sum([((rev_weight * math.log(float(business['review_count'])) + star_weight * math.log(float(business['stars'])))/float(total_weight)) for business in businesses])
 	rating_avg = 0
 	if len(businesses) > 0:
 		rating_avg = rating_sum / float(len(businesses))
@@ -234,10 +235,10 @@ def accept_bag(new_bag, old_bag, T, weights):
 		if new > old:
 			print ("accept bag - high star avg")
 			return True
-		else:
-			if random.random() < math.exp((new - old) / T):
-				print ("accept bag - low star avg")
-				return True
+		#else:
+			#if random.random() < math.exp((new - old) / T):
+				#print ("accept bag - low star avg")
+				#return True
 	print ("not accept bag")
 	return False
 
@@ -250,7 +251,7 @@ def simulated_annealing(constraints, weights):
 	# Record start time
 	start_time = time.time()
 
-	TRIALS = 1000
+	TRIALS = 100
 	T = 1000.0
 	DECAY = 0.98
 
@@ -292,4 +293,5 @@ print("FINAL vals", vals)
 print("sim_bag", sim_bag)
 print("length sim bag", str(len(sim_bag)))
 print("run_time", str(run_time))
+print("final val", rating_average(sim_bag, weights))
 print("DONE")
