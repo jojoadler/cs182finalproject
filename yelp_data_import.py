@@ -83,13 +83,13 @@ for restaurant in restaurant_data:
 state_domains = dict.fromkeys(copy.deepcopy(states), possible_restaurants)
 
 def strip_categories(categories):
-	# Converts a 'Categories' string into a list of categories
-	#	THIS FUNCTION DOES NOT WORK
+	"""
+	Converts a 'Categories' string into a list of categories
+	"""
 	categorieslist = []
 	for category in categories:
 		# turns unicode into strings
 		cats = (''.join(''.join([cat.encode('UTF8') for cat in category]))).split(', ')
-		#if 'Restaurants' in catswords:
 		categorieslist.append(catswords)
 	return categorieslist[1]
 
