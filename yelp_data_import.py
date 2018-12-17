@@ -6,7 +6,7 @@ import copy
 import random
 import math
 
-# Track filepath - note that this will need to be changed
+# CHANGE DIRECTORY HERE
 filepath = '/Users/jojoadler/Desktop/yelp_academic_dataset_business.json'
 #filepath = '/Users/amydanoff/Desktop/yelp_dataset/yelp_dataset/yelp_academic_dataset_business.json'
 
@@ -21,7 +21,7 @@ def open_data(filepath):
 # List of all businesses in dataset
 data = open_data(filepath)
 
-# will contain a list of dictionaries for restaurants only
+#Will contain a list of dictionaries for restaurants only
 restaurant_data = []
 
 # sorts through data and extracts only those with category 'restaurants'
@@ -33,12 +33,9 @@ for restaurant in data[0:len(data)]:
 		if 'Restaurants' in catswords:
 			restaurant_data.append(restaurant)
 
-#inputs for a sample problem
-user_inputs = {'days': [3], 'state': ['NC'], 'city': ['Belmont'], 'cuisines': [['Mexican', 1],['Italian', 2]], 'base_location': [(33.4484,-112.0740)], 'maxDist': [10]}
-# constraints for the sample problem, for now this is hardcoded, but should be automatically constructed
-constraints = [('Mexican', 'Italian'), ('Italian', 'Mexican')]
+def city_businesses(city): [business for business in data if business['city'] == city]
 
-belmont_businesses = [business for business in data if business['city'] == 'Belmont']
+belmont_businesses = city_businesses('Belmont')
 
 belmont_cats = {}
 cats_split = []
@@ -83,7 +80,7 @@ for restaurant in restaurant_data:
 			if rest_to_base <= user_inputs['maxDist']:
 				possible_restaurants.append(restaurant)
 
-state_domains = dict.fromkeys(copy.deepcopy(states), possible_restaurants[:50])
+state_domains = dict.fromkeys(copy.deepcopy(states), possible_restaurants)
 
 def strip_categories(categories):
 	# Converts a 'Categories' string into a list of categories
