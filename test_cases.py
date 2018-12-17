@@ -64,7 +64,7 @@ TEST CASE 1c
 	num_meals: 6
 """
 # Filter down to restaurants in Parma
-city1c = 'Parma'
+city1c = 'Concord'
 #rests = filter_restaurants(data, 'Parma')
 num_meals1c = 6
 constraints1c = {'Unique': False, 'Mexican': 1, 'Pizza': 1}
