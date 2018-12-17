@@ -4,6 +4,7 @@ import json
 import geopy.distance
 import copy
 import random
+import math
 
 # Track filepath - note that this will need to be changed
 filepath = '/Users/jojoadler/Desktop/yelp_academic_dataset_business.json'
@@ -84,6 +85,110 @@ for restaurant in restaurant_data:
 
 state_domains = dict.fromkeys(copy.deepcopy(states), possible_restaurants[:50])
 
+def strip_categories(categories):
+	# Converts a 'Categories' string into a list of categories
+	#	THIS FUNCTION DOES NOT WORK
+	categorieslist = []
+	for category in categories:
+		# turns unicode into strings
+		cats = (''.join(''.join([cat.encode('UTF8') for cat in category]))).split(', ')
+		#if 'Restaurants' in catswords:
+		categorieslist.append(catswords)
+	return categorieslist[1]
+
+def category_list_maker(restaurants):
+	# Makes a dict of each restaurant, the list of categories they have
+	restaurant_categories = {}
+	for restaurant in restaurants:
+		restaurant_categories[(restaurant['business_id'])] = strip_categories(restaurant['categories'])
+	return restaurant_categories
+
+def category_counter(restaurants):
+	categories = {}
+	for restaurant in restaurants:
+		for category in category_list_maker(restaurant)['business_id']:
+			if categories.get(category, None) == None:
+				categories[category] = 1
+			else:
+				categories[category] += 1
+	return categories
+
+def user_solution_checker(user_dict, bigX, littleX, assignment, unique = False):
+	restaurant_categories = category_list_maker(assignment.values())
+	checker = copy.deepcopy(assignment)
+	if unique:
+		for category in user_dict.keys():
+			if category_counter(checker.values())[category] > 1:
+				return False
+	else:
+		for category in user_dict.keys():
+			if category_counter(checker.values())[category] > user_dict[category]:
+				return False
+	return True
+
+#def strip_categories(categories):
+	# Converts a 'Categories' string into a list of categories
+	#return [x.strip() for x in categories.split(',')]
+
+def has_category(business, category):
+	# Takes in a business object and a category, returns True if the business has that category
+	# and False otherwise
+	categories = set()
+	if business['categories']:
+		categories = set(strip_categories(business['categories']))
+	if category in categories:
+		return True 
+	return False
+
+def count_categories(businesses):
+	# Converts a list of business items into a dictionary of categories
+	# Does not include count for 'Restaurants'
+	categories = {}
+	for business in businesses:
+		cats_string = business['categories']
+		cats_list = []
+		if cats_string:
+			cats_list = strip_categories(cats_string)
+		for cat in cats_list:
+			if cat != 'Restaurants':
+				if cat in categories:
+					categories[cat] += 1
+				else:
+					categories[cat] = 1
+	return categories
+
+def unique_categories(categories):
+	# Takes in a dictionary of categories and returns True if unique, else False
+	# This is low-key hard. maybe constraint should be more than twice
+	#return all(value == 1 for value in list(categories.values()))
+	return all(value < 3 for value in list(categories.values()))
+
+def constraints_match(categories, constraints):
+	"""
+	Takes in a dictionary of category counts and a dictionary specifying the constraints, which are given as MAXIMUMS
+	and returns True if the constraints are satisfied, and False otherwise.
+	Any category that is not specified in the constraints dictionary can have any value.
+	Additionally, there is a category called 'Unique', whereby the user can specify that they want all unique categories.
+	"""
+
+	# Else, iterate through categories and ensure maximums are satisfied
+	for category, val in constraints.items():
+		if category != 'Unique':
+			# If category maximum is exceeded, return False
+			if val != 0:
+				if category in categories:
+					if categories[category] > val:
+						return False
+			else:
+				if category in categories:
+					return False
+
+	# If 'Unique' is specified, ensure categories are unique
+	if constraints['Unique']:
+		return unique_categories(categories)
+	return True
+
+
 # creating arcs
 def constraint_generator(states):
 	constraints = {}
@@ -137,45 +242,41 @@ curr_deleted = {}
 for state in states:
 	curr_deleted[state] = []
 
+star_weight = 4
+reviews_weight = 3
 
 def stardomain(var, curr_domains):
 	if curr_domains:
-		stardomain = sorted(curr_domains[state], key = lambda restaurant: restaurant['stars'])
+		stardomain = sorted(curr_domains[state], key = lambda restaurant: (star_weight*math.log10(restaurant['stars']) + reviews_weight*math.log10(restaurant['review_count']))/(star_weight + reviews_weight))
 		stardomain.reverse()
 	else:
-		stardomain = sorted(state_domains[state], key = lambda restaurant: restaurant['stars'])
+		stardomain = sorted(state_domains[state], key = lambda restaurant: (star_weight*math.log10(restaurant['stars']) + reviews_weight*math.log10(restaurant['review_count']))/(star_weight + reviews_weight))
 		stardomain.reverse()
 	return stardomain
 
-def backtrack(states, domains, neighbors):
+def backtrack(states, domains, neighbors, user_dict):
 	counter = 0
 	curr_domains = copy.deepcopy(domains)
 	for meal in states:
 		curr_deleted[meal] = []
-	return recurse({}, states, domains, neighbors)
+	return recurse({}, states, domains, neighbors, user_dict)
 
 varr = [None]
-def recurse(assignment, states, domains, neighbors):
-	print 5
+def recurse(assignment, states, domains, neighbors, user_dict):
 	if len(unassigned) == 0:
-		print 'DONEZO'
 		return assignment
 
 	varr[0] = literallyjustchoosearandomvariablebecauseforsomereasonwhatimdoingisntworking()
-	print varr
-	print unassigned
-	print assignment.keys()
 
 	for val in stardomain(varr[0], curr_domains):
-		print varr[0]
 		assignment[varr[0]] = val
-		forwardcheck(varr[0], val, assignment)
-		nextstep = recurse(assignment, states, domains, neighbors)
+		forwardcheck(varr[0], val, assignment, user_dict)
+		nextstep = recurse(assignment, states, domains, neighbors, user_dict)
 		if nextstep != None:
 			return nextstep
 	return None
 
-def forwardcheck(var, val, assignment):
+def forwardcheck(var, val, assignment, user_dict):
 	if curr_domains:
 		for (meal, restaurant) in curr_deleted[var]:
 			curr_domains[meal].append(restaurant)
@@ -184,15 +285,15 @@ def forwardcheck(var, val, assignment):
 		for meal in neighbors[var]:
 			if meal not in assignment:
 				for restaurant in curr_domains[meal][:]:
-					if not check_sol(states, var, val, meal, restaurant):
+					num_cats = count_categories(assignment.values())
+					if not constraints_match(num_cats, user_dict):
+					#if not user_solution_checker(user_dict, meal, restaurant, assignment):
 						curr_domains[meal].remove(restaurant)
 						curr_deleted[var].append((meal, restaurant))
+
+no_mexican_constraints = {'Unique': True, 'Mexican': 0, 'Pizza': 0}
 
 def literallyjustchoosearandomvariablebecauseforsomereasonwhatimdoingisntworking():
 	var = random.choice(unassigned)
 	unassigned.remove(var)
 	return var
-
-practice_domains = {'a':[1,2,3,4],'b':[1,2,3,4],'c':[1,2,3,4],'d':[1,2,3,4]} 
-practice_states = {'a':None,'b':None,'c':None,'d':None} 
-practice_neighbors = {'a':['b','d'],'b':['a','c'],'c':['b','d',],'d':['a','c']}
