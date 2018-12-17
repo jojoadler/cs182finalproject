@@ -1,0 +1,39 @@
+What we want to do first is receive user input
+	1. Length of the trip
+	1a. Destination
+	2. Types of cuisines they want to eat
+	3. Any specific restaurants they want to eat at
+	4. Their base location
+	5. The time they eat breakfast, lunch, and dinner
+	5a. How willing they are to travel from their base location
+	6. Minimum number of stars on the restaurants they are willing to eat at
+	7. Maximum pricing of the restaurants they are willing to eat at
+	8. Things they do not want to do more than x number of times
+		a. eat a certain cuisine
+		b. eat at a restaurant with a certain star rating
+	9. Things they do not want to do in a row x number of times
+		a. eat a certain cuisine
+		b. eat at a restaurant with a certain star rating
+		c. certain neighborhoods
+	10. Things they do not want to be in conflict
+		a. if they eat one type of cuisine they do not want to eat at another
+		b. if they eat in one neighborhood they do not want to eat in another
+	11. Things they definitely want to do x number of times
+		a. eat a certain cuisine
+		b. eat at a restaurant with a certain star rating
+		c. certain neighborhoods
+
+What each input will tell us:
+	1. How many time slots for meals
+	1a. Slim down data set
+	2. Slim down data set
+	3.
+	4. Must convert to coordinates so that the algorithm can calculate distance from base to each restaurant
+	5. Will use this to check to see if various restaurants are open when they want to eat certain meals
+	5a. Slim down data set
+	6. Slim down data set
+	7. Slim down data set
+	8. Constraint
+	9. Constraint
+	10. Constraint
+	11. Constraint
