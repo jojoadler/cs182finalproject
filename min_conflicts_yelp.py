@@ -122,7 +122,6 @@ def constraints_match(categories, constraints):
 
 	Returns True if the constraints are satisfied, and False otherwise.
 	"""
-
 	# Iterate through constraints
 	for category, val in constraints.items():
 		if category != 'Unique':
@@ -142,7 +141,6 @@ def constraints_match(categories, constraints):
 	if constraints['Unique']:
 		#print("unique_categories check", unique_categories(categories))
 		return unique_categories(categories)
-	#print("constraints match")
 	# If all constraints are satisfied, return true
 	return True
 

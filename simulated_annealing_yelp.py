@@ -5,6 +5,7 @@ import random
 import math
 import time
 
+# Set up data
 filepath = '/Users/amydanoff/Desktop/yelp_dataset/yelp_dataset/yelp_academic_dataset_business.json'
 
 # Function that returns formatted data
@@ -18,58 +19,40 @@ def open_data(filepath):
 # List of all businesses in dataset
 data = open_data(filepath)
 
-belmont_businesses = [business for business in data if business['city'] == 'Phoenix']
+# Filter businesses down to restaurants in a certain location
+def filter_restaurants(data, city):
+	"""
+	Takes in full yelp dataset and specified city,
+	Returns a list of all the restaurants in that city
+	"""
+	businesses_by_loc = [business for business in data if business['city'] == city]
+	rests, cats_split = [], []
+	for rest in businesses_by_loc:
+		if rest['categories']:
+			cats_split = [x.strip() for x in rest['categories'].split(',')]
+		if 'Restaurants' in cats_split:
+			rests.append(rest)
+	return rests
 
-# Find all categories in belmont restaurants
-	# we are ONLY interested in businesses that have the "restaurant" tag. 
-	# This cuts down our options further
-belmont_cats = {}
-cats_split = []
-belmont_rests = []
-for rest in belmont_businesses:
-	if rest['categories']:
-		cats_split = [x.strip() for x in rest['categories'].split(',')]
-	if 'Restaurants' in cats_split:
-		belmont_rests.append(rest)
-		for cat in cats_split:
-			if cat in belmont_cats:
-				belmont_cats[cat] += 1
-			else:
-				belmont_cats[cat] = 1
-#print(belmont_cats)
-# Note - for Belmont, filtering by restaurants cuts our list down to 51 businesses
-
-# try a small simulated annealing problem w the following constraints:
-# 3 meals
-# food category - must all be different - note that to format categories, we split by comma
-# rating is impt
-#print(belmont_rests[0])
-cats_split = [x.strip() for x in belmont_rests[0]['categories'].split(',')]
-#print('categories belmont:', cats_split)
-
-# SIMULATED ANNEALING PROBLEM IS HERE VVV
-
-# number of items
-N = len(belmont_rests)
-
-# Itinerary (number of meals) limit
-M = 7
-
-# List of eligible restaurants
-items = belmont_rests
-#print(len(items))
-
-# Values for restaurants - in terms of star rating
-#stars = [x['stars'] for x in items]
-#print(len(stars))
-
+"""
+Helper Functions
+"""
 def strip_categories(categories):
-	# Converts a 'Categories' string into a list of categories
-	return [x.strip() for x in categories.split(',')]
+	"""
+	Takes in a 'categories' formatted string (as from business['categories']),
+	returns a list of categories from that string
+	"""
+	cats = []
+	if categories:
+		cats = [x.strip() for x in categories.split(',')]
+		cats.remove('Restaurants')
+	return cats
 
 def has_category(business, category):
-	# Takes in a business object and a category, returns True if the business has that category
-	# and False otherwise
+	"""
+	Takes in a business object and a category
+	Returns True if the business has that category, else False
+	"""
 	categories = set()
 	if business['categories']:
 		categories = set(strip_categories(business['categories']))
@@ -78,8 +61,12 @@ def has_category(business, category):
 	return False
 
 def count_categories(businesses):
-	# Converts a list of business items into a dictionary of categories
-	# Does not include count for 'Restaurants'
+	"""
+	Takes in a list of 'business' objects (i.e. Restaurants), and
+	returns a dictionary of the categories in that list mapped to the
+	count of times that category appears in the list
+	N.B. - Does not include count for 'Restaurants' category
+	"""
 	categories = {}
 	for business in businesses:
 		cats_string = business['categories']
@@ -95,23 +82,29 @@ def count_categories(businesses):
 	return categories
 
 def unique_categories(categories):
-	# Takes in a dictionary of categories and returns True if unique, else False
-	# This is low-key hard. maybe constraint should be more than twice
-	#return all(value == 1 for value in list(categories.values()))
-	return all(value < 3 for value in list(categories.values()))
+	"""
+	Takes in a dictionary of category counts (as returned by count_categories).
+	returns True if all categories are unique, else returns False
+	"""
+	return all(value == 1 for value in list(categories.values()))
 
 def constraints_match(categories, constraints):
 	"""
-	Takes in a dictionary of category counts and a dictionary specifying the constraints, which are given as MAXIMUMS
-	and returns True if the constraints are satisfied, and False otherwise.
-	Any category that is not specified in the constraints dictionary can have any value.
-	Additionally, there is a category called 'Unique', whereby the user can specify that they want all unique categories.
-	"""
+	Takes in a dictionary of category counts (categories) 
+	and a dictionary specifying the constraints (constraints), 
+	which are given as MAXIMUM counts for a certain category.
+	
+	Additionally, there is a category called 'Unique', 
+	whereby the user can specify that they want all unique categories.
 
-	# Else, iterate through categories and ensure maximums are satisfied
+	Any category that is not specified in the constraints dictionary can have any value.
+
+	Returns True if the constraints are satisfied, and False otherwise.
+	"""
+	# Iterate through constraints
 	for category, val in constraints.items():
 		if category != 'Unique':
-			# If category maximum is exceeded, return False
+			# If constraint maximum is exceeded in category counts, return False
 			if val != 0:
 				if category in categories:
 					if categories[category] > val:
@@ -123,10 +116,13 @@ def constraints_match(categories, constraints):
 	# If 'Unique' is specified, ensure categories are unique
 	if constraints['Unique']:
 		return unique_categories(categories)
+	# If all constraints are satisfied, return true
 	return True
 
 def star_average(businesses):
-	# Returns average star rating for all businesses in a list
+	"""
+	Returns the average star rating for a list of businesses
+	"""
 	star_sum = 0
 	star_avg = 0
 	for business in businesses:
@@ -134,16 +130,13 @@ def star_average(businesses):
 	if len(businesses) > 0:
 		star_avg = star_sum / float(len(businesses))
 	length = len(businesses)
-	#print("business length,", length) 
-	#print(businesses)
-	#print ("star_avg", star_avg)
 	return star_avg
 
 def rating_average(businesses, weights):
 	"""
-	Given a list of businesses, returns their average 'rating' as defined by
-	the evaluation function:
-	rating = log(# of reviews) * star rating
+	Given a list of businesses and user-inputted weights, 
+	returns their average normalized 'rating' as defined by the evaluation function:
+	rating = (review_weight * log(# of reviews)) * (star_weight * log(star rating)) / (total weight of inputs)
 	"""
 	rev_weight, star_weight = weights['reviews'], weights['stars']
 	total_weight = rev_weight + star_weight
@@ -153,100 +146,115 @@ def rating_average(businesses, weights):
 		rating_avg = rating_sum / float(len(businesses))
 	return rating_avg
 
-def neighbor_bag(bag, constraints):
-	curr_bag = bag.copy()
-	#curr_len = len(bag) # never exceed M items
-	curr_cats = count_categories(bag) #count_categories(list(bag.values()))
+"""
+Functions for simulated annealing
+"""
+
+def neighbor_state(curr_state, constraints):
+	"""
+	Takes in the current state (a list of restaurants) and constraints
+	returns a random 'neighbor' state, such that constraints
+	remain satisfied (we maintain a feasible set of items).
+	Specifically, we never exceed the user specified max number of restaurants (num_meals),
+	We ensure that 'Unique' and maximum category constraints are satisfied,
+	and that a restaurant is never repeated.
+
+	A neighbor state is defined as one where exactly 1 new random item (restaurant)
+	is added to the state, and
+	then items are deleted at random until that item 'fits' in the constraints.
+	"""
+	curr_bag = curr_state.copy()
+	curr_cats = count_categories(curr_state) 
 	# Initialize indices that have not yet been picked
-	#print(curr_cats)
-	curr_biz_IDs = [x['business_id'] for x in bag]
-	"""
-	Return a "neighbor" of the current bag.
+	curr_biz_IDs = [x['business_id'] for x in curr_state]
 
-	In generating the neighbor bag, we maintain a feasible set of items such that
-	constraints are checked before the accept_bag function. Specifically,
-	in generating a neighbor bag:
-	 -We never exceed M items
-	 -We never have restaurants from the same 'genre'
-	 -We never have the same restaurant twice
-	 #-We must always have one 'Fast Food' restaurant
-	 ~~~~~~ ask monica about how to satisfy multiple constraints in simulated annealing?
-
-	bags
-	Algorithm:
-	-Select an item from the unchosen items at random (check against business ID)
-	-If it violates any constaints, delete from the bag at random amongst violated items until constraints are satisfied
-	"""
-	# Filter items if any constraints are set to 0
-	start = time.time()
+	# Filter items to be picked from if any constraints are set to 0
 	blocked_cats = [category for (category, val) in constraints.items() if val == 0]
-	filtered_items = items
+	filtered_items = rests
 	for category in blocked_cats:
 		for item in filtered_items:
 			if has_category(item, category):
 				filtered_items.remove(item)
-	end = time.time()
-	print("filter time:",(end - start))
 
-	# try to pick an index at random from remaining items and add to bag
+	# Pick an index at random from remaining (unfiltered) items and add to state
 	rand_index = random.randint(0, len(filtered_items) - 1)
-	rand_biz_ID = filtered_items[rand_index]['business_id']
-	# Ensure the same business is not picked twice
-	while rand_biz_ID in curr_biz_IDs:
+	rand_item = filtered_items[rand_index]
+	# Ensure the same restaurant is not picked twice
+	while rand_item in curr_bag:
 	    rand_index = random.randint(0, len(filtered_items) - 1)
-	    rand_biz_ID = filtered_items[rand_index]['business_id']
+	    rand_item = filtered_items[rand_index]
 
+	# Add randomly generated new item to bag
 	curr_bag.append(filtered_items[rand_index])
+	# Update category counts in new state
 	curr_cats = count_categories(curr_bag)
 
-	# Ensure that we have under M items and that genres are satisfied
-	while len(curr_bag) > M or not constraints_match(curr_cats, constraints):
-		#print("pick again")
-		# pick a business at random from bag
+	# Ensure that we have under the max number of items and that genres are satisfied
+	# Delete items from bag at random until constraints are satisfied
+	while len(curr_bag) > num_meals or not constraints_match(curr_cats, constraints):
+		# Pick a business at random from bag
 		rand_new_index = random.randint(0, len(curr_bag) - 1)
-		rand_biz = curr_bag[rand_new_index]
-		# ensure that business picked is not the same as the one from before
-		new_biz_ID = rand_biz['business_id']
-		if new_biz_ID != rand_biz_ID:
+		new_rand_biz = curr_bag[rand_new_index]
+		# Ensure that new business picked is not the same as the one that
+		# was just added
+		if new_rand_biz != rand_item:
 		    del curr_bag[rand_new_index]
 		curr_cats = count_categories(curr_bag)
 
-	#print ("neighbor bag is same", curr_bag == old_bag)
+	# Once no constraints are violated, return bag
 	return curr_bag
 
-#neighbor_bag(belmont_rests)
+def accept_state(new_state, old_state, T, weights):
+	"""
+	Given a potential new state, the old state, the current temperature T,
+	and the weights given by the user, determine whether to accept the new
+	bag.
 
-def accept_bag(new_bag, old_bag, T, weights):
-	# Always accept the bag if the length is longer (probability = 1)
-	# accept with some probability if the length is the same, but the avg star rating is lower
-	# weights is a dict {stars: weight, reviews: weight}, where weight is an int between 0-5
+	Specifically, if the rating function is higher for the new bag,
+	or if the new bag is longer than the old bag,
+	accept the new bag with probability 1.
 
-	if len(new_bag) > len(old_bag):
-		print ("Accept long bag")
+	Otherwise, accept the new bag with probability
+	1/e^(|100 - |new-old||/T), such that this probability
+	decreases as T decreases, and increases as the old 
+	rating is closer to the new rating.
+	"""
+
+	# Always accept the new state if the length is longer
+	if len(new_state) > len(old_state):
+		#print("accept long bag")
 		return True
+
 	else:
-		old_avg = star_average(old_bag)
-		new_avg = star_average(new_bag)
-		old = rating_average(old_bag, weights)
-		new = rating_average(new_bag, weights)
-		print("old", old)
-		print("new", new)
-		#if new_avg > old_avg:
-		if new > old:
-			print ("accept bag - high star avg")
+		# Get ratings of old and new bags
+		old_rating = rating_average(old_state, weights)
+		new_rating = rating_average(new_state, weights)
+		
+		# If the new rating is better, accept with prob = 1
+		if new_rating > old_rating:
 			return True
-		#else:
-			#if random.random() < math.exp((new - old) / T):
-				#print ("accept bag - low star avg")
-				#return True
-	print ("not accept bag")
+		# If the old rating is better, accept with prob
+		# 1/e^(|100 - |new-old||/T)
+		else:
+			# Set acceptance probability
+			d = abs(new_rating - old_rating) / (weights['reviews'] + weights['stars'])
+			#print("d", d)
+			p = 0
+			if T != 0:
+				p = 1 / (math.exp((abs(100-d) / T)))
+			#print("p", p)
+			# Accept 'worse' state with probability p
+			if random.random() < p:
+				return True
+
+	# Else, do not accept bag
 	return False
 
 def simulated_annealing(constraints, weights):
 	"""
 	Simulated Annealing Algorithm
 
-	Return list of itinerary values while annealing and final bag: (vals, bag)
+	Return list of itinerary values while annealing and final state and runtime: (vals, state, runtime)
 	"""
 	# Record start time
 	start_time = time.time()
@@ -257,19 +265,17 @@ def simulated_annealing(constraints, weights):
 
 	vals = []
 	sim_val = 0
-	sim_bag = []
+	sim_state = []
 
 	for trial in range(TRIALS):
-
-	    # Pick a random neighbor
-	    next_bag = neighbor_bag(sim_bag, constraints).copy()
-	    #next_val = star_average(next_bag)
+	    # Pick a random neighbor and record its value
+	    next_bag = neighbor_state(sim_state, constraints).copy()
 	    next_val = rating_average(next_bag, weights)
 
-	    # Accept with some probability
-	    if accept_bag(next_bag, sim_bag, T, weights):
+	    # Accept neighbor with some probability
+	    if accept_state(next_bag, sim_state, T, weights):
 	        sim_val = next_val
-	        sim_bag = next_bag.copy()
+	        sim_state = next_bag.copy()
 
 	    # Update temperature
 	    T *= DECAY
@@ -280,18 +286,111 @@ def simulated_annealing(constraints, weights):
 	# Record end time
 	end_time = time.time()
 	run_time = (end_time - start_time)
-	print("run_time", str(run_time))
-	return vals, sim_bag, run_time
+	return vals, sim_state, run_time
 
 
-unique_constraints = {'Unique': True}
-mexican_constraints = {'Unique': False, 'Mexican': 3}
-no_mexican_constraints = {'Unique': True, 'Mexican': 0, 'Pizza': 0}
+"""
+TESTING
+"""
+def format_meals(output, weights, run_time):
+	"""
+	Helper function for formatting testing
+	"""
+	length = len(output)
+	star_avg = star_average(output)
+	rating_avg = rating_average(output, weights)
+	print("Length:", length)
+	print("Star avg", star_avg)
+	for meal_num in range(len(output)):
+		print("Meal number", meal_num + 1)
+		# Get important attributes from restaurant
+		restaurant = output[meal_num]
+		name = restaurant['name']
+		categories = restaurant['categories']
+		stars = restaurant['stars']
+		review_count = restaurant['review_count']
+		print("Name:", name)
+		print("categories:", categories)
+		print("stars:", stars)
+		print("review_count:", review_count)
+	print("Rating average,", rating_avg)
+	print("run_time", run_time)
+	print("\n")
+"""
+TEST CASE 1
+	"Basic"
+	City: 'Phoenix'
+	Constraints: {'Unique': True}
+	Weights: {'reviews': 0, 'stars': 5}
+	num_meals: 5
+"""
+# Filter down to restaurants in Phoenix
+rests = filter_restaurants(data, 'Phoenix')
+num_meals = 5
+constraints = {'Unique': True}
+weights = {'reviews': 0, 'stars': 5}
+
+# Get output
+vals, sim_state, run_time = simulated_annealing(constraints, weights)
+# Print output
+print("TEST CASE 1 OUTPUT:")
+format_meals(sim_state, weights, run_time)
+
+"""
+TEST CASE 2
+	"Basic plus a few constraints, some weight on reviews"
+	City: 'Phoenix'
+	Constraints: {'Unique': True, 'Mexican': 0, 'Pizza': 0}
+	Weights: {'reviews': 2, 'stars': 5}
+	num_meals: 5
+"""
+# Filter down to restaurants in Phoenix
+rests = filter_restaurants(data, 'Phoenix')
+num_meals = 5
+constraints = {'Unique': True, 'Mexican': 0, 'Pizza': 0}
+weights = {'reviews': 2, 'stars': 5}
+
+# Get output
+vals, sim_state, run_time = simulated_annealing(constraints, weights)
+# Print output
+print("TEST CASE 2 OUTPUT:")
+format_meals(sim_state, weights, run_time)
+
+"""
+TEST CASE 3
+	"Heavily constrained, non-unique, more weight on reviews"
+	City: 'Phoenix'
+	Constraints: {'Unique': False, 'Mexican': 0, 'Pizza': 0, 'American (New)': 0, 'Japanese':0, 'Chinese': 1}
+	Weights: {'reviews': 4, 'stars': 2}
+	num_meals: 10
+"""
+# Filter down to restaurants in Phoenix
+rests = filter_restaurants(data, 'Phoenix')
+num_meals = 10
+constraints = {'Unique': False, 'Mexican': 0, 'Pizza': 0, 'American (New)': 0, 'Japanese':0, 'Chinese': 1}
 weights = {'reviews': 4, 'stars': 2}
-vals, sim_bag, run_time = simulated_annealing(no_mexican_constraints, weights)
-print("FINAL vals", vals)
-print("sim_bag", sim_bag)
-print("length sim bag", str(len(sim_bag)))
-print("run_time", str(run_time))
-print("final val", rating_average(sim_bag, weights))
-print("DONE")
+
+# Get output
+vals, sim_state, run_time = simulated_annealing(constraints, weights)
+# Print output
+print("TEST CASE 3 OUTPUT:")
+format_meals(sim_state, weights, run_time)
+
+"""
+TEST CASE 4
+	"Heavily constrained, small set, non-unique, equal weight"
+	City: 'Parma'
+	Constraints: {'Unique': True, 'Mexican': 0, 'Pizza': 0, 'American (New)': 0, 'Japanese':0, 'Chinese': 1}
+	Weights: {'reviews': 3, 'stars': 3}
+	num_meals: 8
+"""
+rests = filter_restaurants(data, 'Parma')
+num_meals = 8
+constraints = {'Unique': True, 'Mexican': 0, 'Pizza': 0, 'American (New)': 0, 'Japanese':0, 'Chinese': 1}
+weights = {'reviews': 3, 'stars': 3}
+
+# Get output
+vals, sim_state, run_time = simulated_annealing(constraints, weights)
+# Print output
+print("TEST CASE 4 OUTPUT:")
+format_meals(sim_state, weights, run_time)
