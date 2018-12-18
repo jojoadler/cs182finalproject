@@ -105,36 +105,6 @@ def test_maker((loc, starweight, reviewweight, num_meals, constraints)):
 			categorieslist.append(catswords)
 		return categorieslist[1]
 
-	"""def category_list_maker(restaurants):
-		# Makes a dict of each restaurant, the list of categories they have
-		restaurant_categories = {}
-		for restaurant in restaurants:
-			restaurant_categories[(restaurant['business_id'])] = strip_categories(restaurant['categories'])
-		return restaurant_categories
-
-	def category_counter(restaurants):
-		categories = {}
-		for restaurant in restaurants:
-			for category in category_list_maker(restaurant)['business_id']:
-				if categories.get(category, None) == None:
-					categories[category] = 1
-				else:
-					categories[category] += 1
-		return categories
-
-	def user_solution_checker(user_dict, bigX, littleX, assignment, unique = False):
-		restaurant_categories = category_list_maker(assignment.values())
-		checker = copy.deepcopy(assignment)
-		if unique:
-			for category in user_dict.keys():
-				if category_counter(checker.values())[category] > 1:
-					return False
-		else:
-			for category in user_dict.keys():
-				if category_counter(checker.values())[category] > user_dict[category]:
-					return False
-		return True"""
-
 	def has_category(business, category):
 		"""
 		Takes in a business object and a category, returns True if the business has that category
@@ -227,10 +197,10 @@ def test_maker((loc, starweight, reviewweight, num_meals, constraints)):
 
 	def runAC3 (stts, domain, neighbs, queue = None):
 		def constraint (x, y): return (x != y)
-		def weirdlist (stts, neighbors): return [(statei, statek) for statei in stts for statek in neighbors[statei]]
+		def arcs (stts, neighbors): return [(statei, statek) for statei in stts for statek in neighbors[statei]]
 		def AC3 (stts, domain, neighbs, queue = None):
 			if queue == None:
-				queue = weirdlist(stts, neighbs)
+				queue = arcs(stts, neighbs)
 			while queue:
 				(statei, statej) = queue.pop()
 				if remove_arcs(stts, domain, neighbs, statei, statej):
@@ -252,6 +222,8 @@ def test_maker((loc, starweight, reviewweight, num_meals, constraints)):
 					domain[statei].remove(restaurantx)
 					gone = True
 			return gone
+
+	runAC3(states, state_domains, neighbors)
 
 	"""****************************************************************************************
 		CODE FOR BACKTRACKING WITH FORWARD CHECK

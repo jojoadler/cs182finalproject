@@ -381,7 +381,7 @@ TEST CASE 5c
 # Filter down to restaurants in Phoenix
 city5c = 'Belmont'
 #rests = filter_restaurants(data, 'Phoenix')
-num_meals5c = 99
+num_meals5c = 30
 constraints5c = {'Unique': False, 'Mexican': 1, 'Pizza': 1, 'Sports Bars': 5, 'Japanese': 10, 'Chinese': 6, 'Juice': 2, 'Pubs': 1, 'Indian': 9, 'Bagels': 3}
 weights5c = {'reviews': 2, 'stars': 5}
 test_case5c = (city5c, weights5c['reviews'], weights5c['stars'], num_meals5c, constraints5c)
