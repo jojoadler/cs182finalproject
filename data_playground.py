@@ -42,4 +42,7 @@ for business in data:
 			cities[city] = 1
 sorted_cities = sorted(cities.items(), key=lambda kv: kv[1], reverse=True)
 print("Cities by restaurants", sorted_cities)
+
+num_businesses = sum(cities.values())
+print("num_businesses", num_businesses)
 # Toronto, Vegas, Phoenix have the most
