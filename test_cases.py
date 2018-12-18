@@ -30,7 +30,8 @@ num_meals1a = 6
 constraints1a = {'Unique': False, 'Mexican': 1, 'Pizza': 1}
 weights1a = {'reviews': 2, 'stars': 5}
 test_case1a = (city1a, weights1a['reviews'], weights1a['stars'], num_meals1a, constraints1a)
-data_to_csv('5b', city5b, str(num_meals), str(run_time), str(vals[-1]), str(sat), 'sim_anneal.csv')
+score1a, runtime1a = test_maker(test_case1a)
+data_to_csv('5b', city1a, str(num_meals1a), str(runtime1a), str(score1a), str(TRUE), 'backtracking.csv')
 
 """
 TEST CASE 1b
