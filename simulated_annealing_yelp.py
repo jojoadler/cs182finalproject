@@ -723,3 +723,119 @@ vals, sim_state, run_time = simulated_annealing(constraints, weights)
 sat = (num_meals == len(sim_state))
 
 data_to_csv('5c', city5c, str(num_meals), str(run_time), str(vals[-1]), str(sat), 'sim_anneal.csv')
+
+"""
+TEST CASE 6a
+	"Basic"
+	City: 'Phoenix'
+	Constraints: Few
+	Weights: {'reviews': 2, 'stars': 5}
+	num_meals: 10
+"""
+city6a = 'Phoenix'
+rests = filter_restaurants(data, city6a)
+num_meals = 10
+constraints = {'Unique': False, 'Mexican': 1, 'Pizza': 1}
+weights = {'reviews': 2, 'stars': 5}
+
+# Get output
+vals, sim_state, run_time = simulated_annealing(constraints, weights)
+sat = (num_meals == len(sim_state))
+
+data_to_csv('6a', city6a, str(num_meals), str(run_time), str(vals[-1]), str(sat), 'sim_anneal.csv')
+
+"""
+TEST CASE 6b
+	"Basic"
+	City: 'Phoenix'
+	Constraints: Many
+	Weights: {'reviews': 2, 'stars': 5}
+	num_meals: 50
+"""
+rests = filter_restaurants(data, city6a)
+num_meals = 51
+constraints = {'Unique': False, 'Mexican': 1, 'Pizza': 3, 'Sports Bars': 2, 'Japanese': 17}
+weights = {'reviews': 2, 'stars': 5}
+
+# Get output
+vals, sim_state, run_time = simulated_annealing(constraints, weights)
+sat = (num_meals == len(sim_state))
+
+data_to_csv('6b', city6a, str(num_meals), str(run_time), str(vals[-1]), str(sat), 'sim_anneal.csv')
+
+"""
+TEST CASE 6c
+	"Basic"
+	City: 'Phoenix'
+	Constraints: Many
+	Weights: {'reviews': 2, 'stars': 5}
+	num_meals: 100
+"""
+rests = filter_restaurants(data, city6a)
+num_meals = 99
+constraints = {'Unique': False, 'Mexican': 1, 'Pizza': 1, 'Sports Bars': 5, 'Japanese': 10, 'Chinese': 6, 'Juice': 2, 'Pubs': 1, 'Indian': 9, 'Bagels': 3}
+weights = {'reviews': 2, 'stars': 5}
+
+# Get output
+vals, sim_state, run_time = simulated_annealing(constraints, weights)
+sat = (num_meals == len(sim_state))
+
+data_to_csv('6c', city6a, str(num_meals), str(run_time), str(vals[-1]), str(sat), 'sim_anneal.csv')
+
+"""
+TEST CASE 7a
+	"Basic"
+	City: 'Phoenix'
+	Constraints: Few
+	Weights: {'reviews': 2, 'stars': 5}
+	num_meals: 10
+"""
+city7 = 'Concord'
+rests = filter_restaurants(data, city7)
+num_meals = 10
+constraints = {'Unique': False, 'Mexican': 1, 'Pizza': 1}
+weights = {'reviews': 2, 'stars': 5}
+
+# Get output
+vals, sim_state, run_time = simulated_annealing(constraints, weights)
+sat = (num_meals == len(sim_state))
+
+data_to_csv('7a', city7, str(num_meals), str(run_time), str(vals[-1]), str(sat), 'sim_anneal.csv')
+
+"""
+TEST CASE 7b
+	"Basic"
+	City: 'Phoenix'
+	Constraints: Many
+	Weights: {'reviews': 2, 'stars': 5}
+	num_meals: 50
+"""
+rests = filter_restaurants(data, city7)
+num_meals = 51
+constraints = {'Unique': False, 'Mexican': 1, 'Pizza': 3, 'Sports Bars': 2, 'Japanese': 17}
+weights = {'reviews': 2, 'stars': 5}
+
+# Get output
+vals, sim_state, run_time = simulated_annealing(constraints, weights)
+sat = (num_meals == len(sim_state))
+
+data_to_csv('7b', city7, str(num_meals), str(run_time), str(vals[-1]), str(sat), 'sim_anneal.csv')
+
+"""
+TEST CASE 7c
+	"Basic"
+	City: 'Phoenix'
+	Constraints: Many
+	Weights: {'reviews': 2, 'stars': 5}
+	num_meals: 100
+"""
+rests = filter_restaurants(data, city7)
+num_meals = 99
+constraints = {'Unique': False, 'Mexican': 1, 'Pizza': 1, 'Sports Bars': 5, 'Japanese': 10, 'Chinese': 6, 'Juice': 2, 'Pubs': 1, 'Indian': 9, 'Bagels': 3}
+weights = {'reviews': 2, 'stars': 5}
+
+# Get output
+vals, sim_state, run_time = simulated_annealing(constraints, weights)
+sat = (num_meals == len(sim_state))
+
+data_to_csv('7c', city7, str(num_meals), str(run_time), str(vals[-1]), str(sat), 'sim_anneal.csv')

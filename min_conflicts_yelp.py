@@ -664,88 +664,138 @@ val = rating_average(output, weights)
 data_to_csv('5c', city5b, str(num_meals), str(run_time), str(val), str(sat), 'results_min_conflict.csv')
 
 """
-TEST CASE 1
+TEST CASE 6a
 	"Basic"
 	City: 'Phoenix'
-	Constraints: {'Unique': True}
-	Weights: {'reviews': 0, 'stars': 5}
-	num_meals: 5
-"""
-# Filter down to restaurants in Phoenix
-rests = filter_restaurants(data, 'Phoenix')
-num_meals = 5
-constraints = {'Unique': True}
-weights = {'reviews': 0, 'stars': 5}
-
-# Make initial greedy assignment
-curr_rests = make_greedy(rests, num_meals, weights)
-# Get output
-output, run_time, sat = min_conflicts(curr_rests, num_meals, constraints, weights)
-# Print output
-print("TEST CASE 1 OUTPUT:")
-format_meals(output, weights, run_time)
-
-"""
-TEST CASE 2
-	"Basic plus a few constraints, some weight on reviews"
-	City: 'Phoenix'
-	Constraints: {'Unique': True, 'Mexican': 0, 'Pizza': 0}
+	Constraints: Few
 	Weights: {'reviews': 2, 'stars': 5}
-	num_meals: 5
+	num_meals: 10
 """
-# Filter down to restaurants in Phoenix
-rests = filter_restaurants(data, 'Phoenix')
-num_meals = 5
-constraints = {'Unique': True, 'Mexican': 0, 'Pizza': 0}
+city6a = 'Phoenix'
+rests = filter_restaurants(data, city6a)
+#rests1 = filter_restaurants(data, 'Phoenix')
+num_meals = 10
+constraints = {'Unique': False, 'Mexican': 1, 'Pizza': 1}
 weights = {'reviews': 2, 'stars': 5}
 
 # Make initial greedy assignment
 curr_rests = make_greedy(rests, num_meals, weights)
 # Get output
 output, run_time, sat = min_conflicts(curr_rests, num_meals, constraints, weights)
-# Print output
-print("TEST CASE 2 OUTPUT:")
-format_meals(output, weights, run_time)
+val = rating_average(output, weights)
+
+data_to_csv('6a', city6a, str(num_meals), str(run_time), str(val), str(sat), 'results_min_conflict.csv')
+
 
 """
-TEST CASE 3
-	"Heavily constrained, non-unique, more weight on reviews"
+TEST CASE 6b
+	"Basic"
 	City: 'Phoenix'
-	Constraints: {'Unique': False, 'Mexican': 0, 'Pizza': 0, 'American (New)': 0, 'Japanese':0, 'Chinese': 1}
-	Weights: {'reviews': 4, 'stars': 2}
+	Constraints: Many
+	Weights: {'reviews': 2, 'stars': 5}
+	num_meals: 50
+"""
+rests = filter_restaurants(data, city6a)
+#rests1 = filter_restaurants(data, 'Phoenix')
+num_meals = 51
+constraints = {'Unique': False, 'Mexican': 1, 'Pizza': 3, 'Sports Bars': 2, 'Japanese': 17}
+weights = {'reviews': 2, 'stars': 5}
+
+# Make initial greedy assignment
+curr_rests = make_greedy(rests, num_meals, weights)
+# Get output
+output, run_time, sat = min_conflicts(curr_rests, num_meals, constraints, weights)
+val = rating_average(output, weights)
+
+data_to_csv('6b', city6a, str(num_meals), str(run_time), str(val), str(sat), 'results_min_conflict.csv')
+
+"""
+TEST CASE 6c
+	"Basic"
+	City: 'Phoenix'
+	Constraints: Many
+	Weights: {'reviews': 2, 'stars': 5}
+	num_meals: 100
+"""
+rests = filter_restaurants(data, city6a)
+#rests1 = filter_restaurants(data, 'Phoenix')
+num_meals = 30
+constraints = {'Unique': False, 'Mexican': 1, 'Pizza': 1, 'Sports Bars': 5, 'Japanese': 10, 'Chinese': 6, 'Juice': 2, 'Pubs': 1, 'Indian': 9, 'Bagels': 3}
+weights = {'reviews': 2, 'stars': 5}
+
+# Make initial greedy assignment
+curr_rests = make_greedy(rests, num_meals, weights)
+# Get output
+output, run_time, sat = min_conflicts(curr_rests, num_meals, constraints, weights)
+val = rating_average(output, weights)
+
+data_to_csv('6c', city6a, str(num_meals), str(run_time), str(val), str(sat), 'results_min_conflict.csv')
+
+"""
+TEST CASE 7a
+	"Basic"
+	City: 'Phoenix'
+	Constraints: Few
+	Weights: {'reviews': 2, 'stars': 5}
 	num_meals: 10
 """
-# Filter down to restaurants in Phoenix
-rests = filter_restaurants(data, 'Phoenix')
+city7 = 'Concord'
+rests = filter_restaurants(data, city7)
+#rests1 = filter_restaurants(data, 'Phoenix')
 num_meals = 10
-constraints = {'Unique': False, 'Mexican': 0, 'Pizza': 0, 'American (New)': 0, 'Japanese':0, 'Chinese': 1}
-weights = {'reviews': 4, 'stars': 2}
+constraints = {'Unique': False, 'Mexican': 1, 'Pizza': 1}
+weights = {'reviews': 2, 'stars': 5}
 
 # Make initial greedy assignment
 curr_rests = make_greedy(rests, num_meals, weights)
 # Get output
 output, run_time, sat = min_conflicts(curr_rests, num_meals, constraints, weights)
-# Print output
-print("TEST CASE 3 OUTPUT:")
-format_meals(output, weights, run_time)
+val = rating_average(output, weights)
+
+data_to_csv('7a', city7, str(num_meals), str(run_time), str(val), str(sat), 'results_min_conflict.csv')
+
 
 """
-TEST CASE 4
-	"Heavily constrained, small set, non-unique, equal weight"
-	City: 'Parma'
-	Constraints: {'Unique': True, 'Mexican': 0, 'Pizza': 0, 'American (New)': 0, 'Japanese':0, 'Chinese': 1}
-	Weights: {'reviews': 3, 'stars': 3}
-	num_meals: 8
+TEST CASE 7b
+	"Basic"
+	City: 'Phoenix'
+	Constraints: Many
+	Weights: {'reviews': 2, 'stars': 5}
+	num_meals: 50
 """
-rests = filter_restaurants(data, 'Parma')
-num_meals = 8
-constraints = {'Unique': True, 'Mexican': 0, 'Pizza': 0, 'American (New)': 0, 'Japanese':0, 'Chinese': 1}
-weights = {'reviews': 3, 'stars': 3}
+rests = filter_restaurants(data, city7)
+#rests1 = filter_restaurants(data, 'Phoenix')
+num_meals = 51
+constraints = {'Unique': False, 'Mexican': 1, 'Pizza': 3, 'Sports Bars': 2, 'Japanese': 17}
+weights = {'reviews': 2, 'stars': 5}
 
 # Make initial greedy assignment
 curr_rests = make_greedy(rests, num_meals, weights)
 # Get output
 output, run_time, sat = min_conflicts(curr_rests, num_meals, constraints, weights)
-# Print output
-print("TEST CASE 3 OUTPUT:")
-format_meals(output, weights, run_time)
+val = rating_average(output, weights)
+
+data_to_csv('7b', city7, str(num_meals), str(run_time), str(val), str(sat), 'results_min_conflict.csv')
+
+"""
+TEST CASE 7c
+	"Basic"
+	City: 'Phoenix'
+	Constraints: Many
+	Weights: {'reviews': 2, 'stars': 5}
+	num_meals: 100
+"""
+rests = filter_restaurants(data, city7)
+#rests1 = filter_restaurants(data, 'Phoenix')
+num_meals = 30
+constraints = {'Unique': False, 'Mexican': 1, 'Pizza': 1, 'Sports Bars': 5, 'Japanese': 10, 'Chinese': 6, 'Juice': 2, 'Pubs': 1, 'Indian': 9, 'Bagels': 3}
+weights = {'reviews': 2, 'stars': 5}
+
+# Make initial greedy assignment
+curr_rests = make_greedy(rests, num_meals, weights)
+# Get output
+output, run_time, sat = min_conflicts(curr_rests, num_meals, constraints, weights)
+val = rating_average(output, weights)
+
+data_to_csv('7c', city7, str(num_meals), str(run_time), str(val), str(sat), 'results_min_conflict.csv')
+
