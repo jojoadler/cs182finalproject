@@ -41,7 +41,7 @@ for restaurant in data[0:len(data)]:
 		if 'Restaurants' in catswords:
 			restaurant_data.append(restaurant)
 
-def test_maker((loc, starweight, reviewweight, num_meals, constraints)):
+def test_maker((loc, reviewweight, starweight, num_meals, constraints)):
 	import time
 	start = time.time()
 	def city_businesses(city): return [business for business in data if business['city'] == city]
