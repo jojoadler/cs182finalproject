@@ -6,6 +6,7 @@ import copy
 import random
 import math
 
+#WRITTEN IN PYTHON 2
 
 # CHANGE DIRECTORY HERE
 filepath = '/Users/jojoadler/Desktop/yelp_academic_dataset_business.json'
