@@ -1,5 +1,6 @@
 import csv
 from backtracking_yelp import test_maker
+#WRITTEN IN PYTHON 2
 
 def data_to_csv(testcase, city, num_meals, num_con, review, star, time, rating, sat, csvname):
 	with open(csvname, 'a') as csvfile:
@@ -351,7 +352,7 @@ TEST CASE 5b
 """
 city5b = 'Belmont'
 num_meals5b = 51
-constraints5b = {'Unique': False, 'Mexican': 1, 'Pizza': 3, 'Sports Bars': 2, 'Japanese': 17, }
+constraints5b = {'Unique': False, 'Mexican': 1, 'Pizza': 3, 'Sports Bars': 2, 'Japanese': 17}
 weights5b = {'reviews': 2, 'stars': 5}
 test_case5b = (city5b, weights5b['reviews'], weights5b['stars'], num_meals5b, constraints5b)
 

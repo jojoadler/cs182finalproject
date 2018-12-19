@@ -46,24 +46,6 @@ def test_maker((loc, reviewweight, starweight, num_meals, constraints)):
 	start = time.time()
 	def city_businesses(city): return [business for business in data if business['city'] == city]
 
-	"""belmont_businesses = city_businesses('Belmont')
-	phoenix_businesses = city_businesses('Phoenix')
-	parma_businesses = city_businesses('Parma')"""
-
-	"""belmont_cats = {}
-	cats_split = []
-	belmont_rests = []
-	for rest in belmont_businesses:
-		if rest['categories']:
-			cats_split = [x.strip() for x in rest['categories'].split(',')]
-		if 'Restaurants' in cats_split:
-			belmont_rests.append(rest)
-			for cat in cats_split:
-				if cat in belmont_cats:
-					belmont_cats[cat] += 1
-				else:
-					belmont_cats[cat] = 1"""
-
 	# create states
 	states = {}
 	# each state will be a tuple defined by the day and the meal (1,2) = sedond day dinner (indexed at 0)
@@ -80,18 +62,6 @@ def test_maker((loc, reviewweight, starweight, num_meals, constraints)):
 				neighbors[state].append((day, meal - i))
 			if meal + i <= 2:
 				neighbors[state].append((day, meal + i))
-
-
-	# all possible values, ie domain
-	possible_restaurants = []
-	# check for every restaurant
-	"""for restaurant in restaurant_data:
-		# check for every restaurant in the location of the user
-		for loc in ['state', 'city']:
-			if restaurant[loc] == user_inputs[loc][0]:
-				rest_to_base = geopy.distance.vincenty(user_inputs['base_location'][0], (restaurant['latitude'], restaurant['longitude']))
-				if rest_to_base <= user_inputs['maxDist']:
-					possible_restaurants.append(restaurant)"""
 
 	state_domains = dict.fromkeys(copy.deepcopy(states), city_businesses(loc))
 
