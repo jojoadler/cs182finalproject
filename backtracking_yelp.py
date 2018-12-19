@@ -1,7 +1,6 @@
 import tarfile
 import zipfile
 import json
-import geopy.distance
 import copy
 import random
 import math
@@ -9,8 +8,8 @@ import math
 #WRITTEN IN PYTHON 2
 
 # CHANGE DIRECTORY HERE
-filepath = '/Users/jojoadler/Desktop/yelp_academic_dataset_business.json'
-#filepath = '/Users/amydanoff/Desktop/yelp_dataset/yelp_dataset/yelp_academic_dataset_business.json'
+#filepath = '/Users/jojoadler/Desktop/yelp_academic_dataset_business.json'
+filepath = '/Users/amydanoff/Desktop/yelp_dataset/yelp_dataset/yelp_academic_dataset_business.json'
 
 """****************************************************************************************
 	CODE FOR DATA CLEANING
@@ -295,4 +294,12 @@ def test_maker((loc, reviewweight, starweight, num_meals, constraints)):
 
 	return (total_fitness , time)
 
+# Filter down to restaurants in Phoenix
+city1a = 'Phoenix'
+#rests1 = filter_restaurants(data, 'Phoenix')
+num_meals1a = 6
+constraints1a = {'Unique': False, 'Mexican': 1, 'Pizza': 1}
+weights1a = {'reviews': 2, 'stars': 5}
+test_case1a = (city1a, weights1a['reviews'], weights1a['stars'], num_meals1a, constraints1a)
 
+test_maker(test_case1a)

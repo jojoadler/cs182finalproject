@@ -1,4 +1,5 @@
 import csv
+import math
 from backtracking_yelp import test_maker
 #WRITTEN IN PYTHON 2
 
@@ -10,6 +11,45 @@ def data_to_csv(testcase, city, num_meals, num_con, review, star, time, rating, 
 
 def write_to_csv(test_case, name):
 	data_to_csv(name, str(test_case[0]), str(test_case[3]), str(len(test_case[4]) - 1), str(test_case[1]), str(test_case[2]), str(test_maker(test_case)[1]), str(test_maker(test_case)[0]), 'TRUE', 'backtracking.csv')
+
+def rating_average(businesses, weights):
+	"""
+	Given a list of businesses and user-inputted weights, 
+	returns their average normalized 'rating' as defined by the evaluation function:
+	rating = (review_weight * log(# of reviews)) * (star_weight * log(star rating)) / (total weight of inputs)
+	"""
+	rev_weight, star_weight = weights['reviews'], weights['stars']
+	total_weight = rev_weight + star_weight
+	rating_sum = sum([((rev_weight * math.log(float(business['review_count'])) + star_weight * math.log(float(business['stars'])))/float(total_weight)) for business in businesses])
+	rating_avg = 0
+	if len(businesses) > 0:
+		rating_avg = rating_sum / float(len(businesses))
+	return rating_avg
+
+def format_meals(output, weights, run_time):
+	"""
+	Helper function for formatting testing
+	"""
+	length = len(output)
+	rating_avg = rating_average(output, weights)
+	print("Length:", length)
+	print("Star avg", star_avg)
+	for meal_num in range(len(output)):
+		print("Meal number", meal_num + 1)
+		# Get important attributes from restaurant
+		restaurant = output[meal_num]
+		name = restaurant['name']
+		categories = restaurant['categories']
+		stars = restaurant['stars']
+		review_count = restaurant['review_count']
+		print("Name:", name)
+		print("categories:", categories)
+		print("stars:", stars)
+		print("review_count:", review_count)
+	print("Rating average,", rating_avg)
+	print("run_time", run_time)
+	print("\n")
+
 """THE BASIC BASE CASE FROM WHICH EACH TEST VARIES:
 City: 'Phoenix'
 Constraints: {'Unique': False, 'Mexican': 1, 'Pizza': 1}
@@ -35,6 +75,7 @@ constraints1a = {'Unique': False, 'Mexican': 1, 'Pizza': 1}
 weights1a = {'reviews': 2, 'stars': 5}
 test_case1a = (city1a, weights1a['reviews'], weights1a['stars'], num_meals1a, constraints1a)
 
+format_meals(test_case1a, weights1a, str(3))
 """
 TEST CASE 1b
 	"Basic"
