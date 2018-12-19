@@ -1,4 +1,4 @@
-# Note - this is written in python 3
+# Written in python 3
 import json
 import operator
 import random
