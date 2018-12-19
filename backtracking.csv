@@ -24,7 +24,7 @@ Case Numer,City,Num Meals,Num Const.,Rev Weight,Star Weight,Time (s),Fitness,
 5c,Belmont,30,9,2,5,427.3893859,1.174329297,TRUE
 6a,Phoenix,10,2,2,5,2073.007781,1.425562643,TRUE
 6b,Phoenix,51,4,2,5,DNE,DNE,DNE
-6c,Phoenix,30,6,2,5,,,
+6c,Phoenix,30,6,2,5,10194.41047,1.425135503,
 7a,Concord,10,2,2,5,36.46524787,1.205926357,
 7b,Concord,51,4,2,5,7054.646831,1.195914143,
 7c,Concord,30,6,2,5,1860.947253,1.20688454,
